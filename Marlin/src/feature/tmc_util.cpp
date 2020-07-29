@@ -233,32 +233,40 @@
   void report_polled_driver_data(TMC &st, const TMC_driver_data &data) {
     const uint32_t pwm_scale = get_pwm_scale(st);
     st.printLabel();
-    SERIAL_CHAR(':'); SERIAL_PRINT(pwm_scale, DEC);
+    SERIAL_CHAR(':');
+    #if ENABLED(TMC_DEBUG)
+      if (pwm_scale < 10) SERIAL_CHAR(' ');
+      if (pwm_scale < 100) SERIAL_CHAR(' ');
+    #endif
+    SERIAL_PRINT(pwm_scale, DEC);
     #if ENABLED(TMC_DEBUG)
       #if HAS_TMCX1X0 || HAS_TMC220x
-        SERIAL_CHAR('/'); SERIAL_PRINT(data.cs_actual, DEC);
+        SERIAL_CHAR('/');
+        if (data.cs_actual < 10) SERIAL_CHAR(' ');
+        SERIAL_PRINT(data.cs_actual, DEC);
       #endif
       #if HAS_STALLGUARD
         SERIAL_CHAR('/');
-        if (data.sg_result_reasonable)
-          SERIAL_ECHO(data.sg_result);
-        else
-          SERIAL_CHAR('-');
+        if (data.sg_result < 10) SERIAL_CHAR(' ');
+        if (data.sg_result < 100) SERIAL_CHAR(' ');
+        if (data.sg_result < 1000) SERIAL_CHAR(' ');
+        SERIAL_ECHO(data.sg_result);
+        if (data.sg_result_reasonable) SERIAL_CHAR('*'); else SERIAL_CHAR(' ');
       #endif
     #endif
     SERIAL_CHAR('|');
-    if (st.error_count)       SERIAL_CHAR('E'); // Error
-    if (data.is_ot)           SERIAL_CHAR('O'); // Over-temperature
-    if (data.is_otpw)         SERIAL_CHAR('W'); // over-temperature pre-Warning
+    if (st.error_count)       SERIAL_CHAR('E'); TERN_(TMC_DEBUG, else SERIAL_CHAR('-')); // Error
+    if (data.is_ot)           SERIAL_CHAR('O'); TERN_(TMC_DEBUG, else SERIAL_CHAR('-')); // Over-temperature
+    if (data.is_otpw)         SERIAL_CHAR('W'); TERN_(TMC_DEBUG, else SERIAL_CHAR('-')); // over-temperature pre-Warning
     #if ENABLED(TMC_DEBUG)
-      if (data.is_stall)      SERIAL_CHAR('G'); // stallGuard
-      if (data.is_stealth)    SERIAL_CHAR('T'); // stealthChop
-      if (data.is_standstill) SERIAL_CHAR('I'); // standstIll
+      if (data.is_stall)      SERIAL_CHAR('G'); else SERIAL_CHAR('-'); // stallGuard
+      if (data.is_stealth)    SERIAL_CHAR('T'); else SERIAL_CHAR('-'); // stealthChop
+      if (data.is_standstill) SERIAL_CHAR('I'); else SERIAL_CHAR('-'); // standstIll
     #endif
-    if (st.flag_otpw)         SERIAL_CHAR('F'); // otpw Flag
+    if (st.flag_otpw)         SERIAL_CHAR('F'); TERN_(TMC_DEBUG, else SERIAL_CHAR('-')); // otpw Flag
     SERIAL_CHAR('|');
-    if (st.otpw_count > 0) SERIAL_PRINT(st.otpw_count, DEC);
-    SERIAL_CHAR('\t');
+    SERIAL_PRINT(st.otpw_count, DEC);
+    SERIAL_ECHO(", ");
   }
 
   #if CURRENT_STEP_DOWN > 0
